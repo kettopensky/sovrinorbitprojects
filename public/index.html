@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SOVRIN Projects</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <meta name="description" content="Projects by Kett. Passion projects, digital products, sites I run, client work and services, mapped as a small solar system." />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -94,6 +97,8 @@
     cursor: pointer; background: none; border: none; color: inherit;
     text-align: left; padding: 0;
   }
+  .brand { display: inline-flex; align-items: center; gap: 12px; }
+  .brand-mark { height: 1.35em; width: auto; filter: drop-shadow(0 0 6px rgba(255,215,0,0.45)); }
   .brand .o { color: var(--cyan); }
   .brand .i { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.8); }
 
@@ -696,7 +701,7 @@
 
 <div class="stage" id="stage">
   <aside class="sidebar">
-    <button class="brand" id="brandBtn">S<span class="o">O</span>VR<span class="i">I</span>N</button>
+    <button class="brand" id="brandBtn"><img class="brand-mark" src="sovrin-mark.svg" alt="" />S<span class="o">O</span>VR<span class="i">I</span>N</button>
 
     <div class="rings" id="ringList"></div>
 
@@ -1796,6 +1801,13 @@ function repaintThumbs() {
 
 // Status pills inherit their orbit's colour; the word carries the meaning.
 // Only private/archived are dimmed, so they read as "not public".
+// The one-line summary shown on rows and cards is the project's own
+// description, not a separate tagline.
+function summaryOf(p) {
+  const sec = (p.sections || []).find(x => x.body);
+  return sec ? sec.body : '';
+}
+
 const STATUS_COLOR = {
   private: 'rgba(240,240,240,0.45)',
   archived: 'rgba(240,240,240,0.3)',
@@ -1827,11 +1839,6 @@ function renderDetail(target, orbit, p, { hero = true } = {}) {
   h1.className = 'detail-title'; h1.textContent = p.title;
   target.appendChild(h1);
 
-  if (p.tagline) {
-    const tl = document.createElement('div');
-    tl.className = 'detail-tagline'; tl.textContent = p.tagline;
-    target.appendChild(tl);
-  }
 
   const meta = document.createElement('div');
   meta.className = 'detail-meta';
@@ -1962,7 +1969,7 @@ function buildList() {
         <span class="lrow-dot" style="background:${orbit.color};box-shadow:0 0 9px ${orbit.color}99"></span>
         <span class="lrow-title">${p.title}</span>
         <span class="lrow-type">${p.type || ''}</span>
-        <span class="lrow-tagline">${p.tagline || ''}</span>
+        <span class="lrow-tagline">${summaryOf(p)}</span>
         <span class="lrow-status" style="border-color:${sc}44;color:${sc}">${p.status}</span>
         <span class="lrow-chev">▶</span>`;
       rh.onclick = () => toggleList(oi, bi);
@@ -2071,7 +2078,7 @@ function buildCards() {
       body.innerHTML = `
         <div class="pcard-type" style="color:${orbit.color}99">${p.type || ''}</div>
         <div class="pcard-title">${p.title}</div>
-        <div class="pcard-tagline">${p.tagline || ''}</div>
+        <div class="pcard-tagline">${summaryOf(p)}</div>
         <div class="pcard-tags">${(p.tags||[]).slice(0,3).map(t =>
           `<span class="pcard-tag" style="border-color:${orbit.color}2e;color:${orbit.color}aa">${t}</span>`
         ).join('')}</div>`;
