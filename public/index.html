@@ -1,0 +1,2155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SOVRIN Projects</title>
+<meta name="description" content="Projects by Kett. Passion projects, digital products, sites I run, client work and services, mapped as a small solar system." />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #030005;
+    --cyan: #00F5FF;
+    --gold: #FFD700;
+    --starlight: #F0F0F0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--starlight);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: relative; width: 100%; height: 100vh; display: flex; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  /* Floats over the map so orbits run underneath it. The soft gradient
+     keeps the menu readable without a hard edge. */
+  .sidebar {
+    position: absolute; left: 0; top: 0; bottom: 0; z-index: 30;
+    width: 300px; overflow-y: auto;
+    background: linear-gradient(to right, rgba(3,0,5,0.55) 0%, rgba(3,0,5,0.25) 60%, transparent 100%);
+    padding: 40px 28px;
+    display: flex; flex-direction: column; gap: 26px;
+  }
+  .brand {
+    font-family: 'Orbitron', sans-serif; font-weight: 800;
+    font-size: 1.4rem; letter-spacing: 0.18em;
+    text-shadow: 0 0 14px rgba(0,245,255,0.4);
+    cursor: pointer; background: none; border: none; color: inherit;
+    text-align: left; padding: 0;
+  }
+  .brand .o { color: var(--cyan); }
+  .brand .i { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.8); }
+
+  .loc-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: rgba(0,245,255,0.6); margin-bottom: 8px;
+  }
+  .loc-rule { height: 1px; background: linear-gradient(to right, rgba(0,245,255,0.5), transparent); margin-bottom: 12px; }
+  .loc-value { font-size: 1.05rem; font-weight: 600; line-height: 1.35; min-height: 2.6em; }
+  .loc-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(240,240,240,0.35); margin-top: 6px; line-height: 1.5; }
+
+  .rings { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+  .ring-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-left: 2px solid transparent;
+    font-size: 13px; color: rgba(240,240,240,0.45);
+    cursor: pointer; transition: all .25s;
+    background: none; border-top: none; border-right: none; border-bottom: none;
+    font-family: 'Inter', sans-serif; text-align: left; width: 100%;
+  }
+  .ring-item:hover { color: rgba(240,240,240,0.9); background: rgba(255,255,255,0.02); }
+  .ring-item.active { color: var(--void); border-left-color: #fff; font-weight: 600; }
+  .ring-num { font-family: 'DM Mono', monospace; font-size: 10px; opacity: .7; min-width: 16px; }
+
+  .back-btn {
+    margin-top: auto;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: rgba(240,240,240,0.4);
+    background: none; border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 16px; border-radius: 99px; cursor: pointer;
+    transition: all .25s; opacity: 0; pointer-events: none;
+  }
+  .back-btn.show { opacity: 1; pointer-events: auto; }
+  .back-btn:hover { color: var(--cyan); border-color: rgba(0,245,255,0.4); }
+
+  /* ── Map ── */
+  .map-wrap { position: relative; flex: 1; overflow: hidden; }
+  canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .node-btn {
+    position: absolute; transform: translate(-50%, -50%);
+    width: 58px; height: 58px; border-radius: 50%;
+    background: none; border: none; cursor: pointer; z-index: 10;
+    transition: opacity .3s;
+  }
+  .node-label {
+    position: absolute; transform: translateX(-50%);
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: center; line-height: 1.35;
+    max-width: 92px; pointer-events: none; z-index: 10;
+    transition: color .25s, opacity .3s, font-size .3s;
+  }
+  .node-label.focused { font-size: 13px; letter-spacing: .14em; max-width: 190px; }
+
+  .hint {
+    position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%);
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .35em; text-transform: uppercase;
+    color: rgba(240,240,240,0.2); z-index: 10;
+    transition: opacity .4s; text-align: center; white-space: nowrap;
+  }
+  .hint.hide { opacity: 0; }
+
+  /* ── Level 3: Info Card ── */
+  .card-layer {
+    position: absolute; inset: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px;
+    background: rgba(3,0,5,0.82);
+    backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .4s;
+  }
+  .card-layer.show { opacity: 1; pointer-events: auto; }
+
+  .info-card {
+    width: 380px; max-height: calc(100vh - 80px);
+    display: flex; flex-direction: column;
+    border-radius: 18px; overflow: hidden;
+    background: linear-gradient(160deg, rgba(20,18,32,0.96), rgba(8,6,16,0.98));
+    border: 1px solid var(--card-accent, rgba(255,215,0,0.35));
+    box-shadow: 0 0 60px -12px var(--card-glow, rgba(255,215,0,0.35)), inset 0 1px 0 rgba(255,255,255,0.06);
+    transform: translateY(16px) scale(.97);
+    transition: transform .4s cubic-bezier(.25,.46,.45,.94);
+  }
+  .card-layer.show .info-card { transform: translateY(0) scale(1); }
+
+  /* Card header band */
+  .card-band {
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: linear-gradient(90deg, var(--card-accent-dim, rgba(255,215,0,0.10)), transparent);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  }
+  .card-band h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+  .card-cost {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: var(--card-accent-text, var(--gold)); white-space: nowrap;
+  }
+
+  /* Card art block */
+  .card-art {
+    position: relative; height: 150px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .card-art canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .card-art .art-fallback {
+    font-family: 'Orbitron', sans-serif; font-size: 2.4rem; font-weight: 800;
+    color: rgba(255,255,255,0.07); letter-spacing: .1em;
+  }
+
+  /* Type line */
+  .card-typeline {
+    padding: 8px 18px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: rgba(240,240,240,0.5);
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; justify-content: space-between; gap: 10px;
+  }
+
+  /* Card body — scrollable */
+  .card-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .card-body::-webkit-scrollbar { width: 4px; }
+  .card-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+  .card-flavor {
+    font-size: 13px; line-height: 1.6; color: rgba(240,240,240,0.62);
+    padding-bottom: 14px; margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Dropdown sections */
+  .sect { border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .sect-head {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 0; background: none; border: none; cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: rgba(240,240,240,0.45); transition: color .2s;
+  }
+  .sect-head:hover { color: var(--card-accent-text, var(--gold)); }
+  .sect-head .chev { transition: transform .3s; font-size: 9px; }
+  .sect.open .sect-head { color: var(--card-accent-text, var(--gold)); }
+  .sect.open .chev { transform: rotate(90deg); }
+  .sect-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s ease, padding .35s ease;
+    font-size: 12.5px; line-height: 1.65; color: rgba(240,240,240,0.5);
+  }
+  .sect.open .sect-body { max-height: 800px; padding-bottom: 12px; }
+  .sect-body ul { list-style: none; }
+  .sect-body li { padding: 3px 0 3px 16px; position: relative; }
+  .sect-body li::before {
+    content: '›'; position: absolute; left: 3px;
+    color: var(--card-accent-text, var(--gold)); opacity: .6;
+  }
+  .sect-body li.done { color: rgba(240,240,240,0.34); }
+  .sect-body li.done::before { content: '✓'; font-size: 10px; }
+
+  /* Card footer stats */
+  .card-foot {
+    padding: 12px 18px; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .card-stat { display: flex; flex-direction: column; gap: 2px; }
+  .card-stat .v {
+    font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500;
+    color: var(--card-accent-text, var(--gold));
+  }
+  .card-stat .l {
+    font-family: 'DM Mono', monospace; font-size: 8.5px;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: rgba(240,240,240,0.3);
+  }
+  .card-visit {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .16em; text-transform: uppercase; text-decoration: none;
+    padding: 8px 14px; border-radius: 99px;
+    border: 1px solid var(--card-accent, rgba(255,215,0,0.35));
+    color: var(--card-accent-text, var(--gold));
+    transition: background .25s;
+  }
+  .card-visit:hover { background: rgba(255,255,255,0.05); }
+
+  .card-close {
+    position: absolute; top: 28px; right: 32px;
+    background: none; border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(240,240,240,0.5); cursor: pointer;
+    width: 38px; height: 38px; border-radius: 50%;
+    font-size: 16px; transition: all .25s;
+  }
+  .card-close:hover { color: #fff; border-color: rgba(255,255,255,0.35); }
+
+  /* Orbit-view scroll affordance */
+  .spin-hint {
+    position: absolute; bottom: 126px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px; z-index: 10;
+    opacity: 0; transition: opacity .4s; pointer-events: none;
+  }
+  .spin-hint.show { opacity: 1; }
+  .spin-arrow {
+    font-family: 'DM Mono', monospace; font-size: 15px;
+    color: rgba(240,240,240,0.25);
+  }
+  .spin-dots { display: flex; gap: 7px; }
+  .spin-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.16); transition: all .3s;
+  }
+  .spin-dot.on { background: var(--gold); box-shadow: 0 0 8px rgba(255,215,0,0.7); transform: scale(1.3); }
+
+  /* ── SPEED TUNER ── */
+  .tuner-toggle {
+    position: absolute; right: 24px; top: 24px; z-index: 26;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(10,8,18,0.8);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(240,240,240,0.45);
+    font-size: 17px; line-height: 1; cursor: pointer;
+    transition: all .3s;
+  }
+  .tuner-toggle:hover { color: var(--gold); border-color: rgba(255,215,0,0.4); transform: rotate(90deg); }
+  .tuner-toggle.open { color: var(--gold); border-color: rgba(255,215,0,0.35); }
+
+  .tuner {
+    position: absolute; right: 24px; top: 72px; z-index: 25;
+    width: 236px; padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(10,8,18,0.86);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.09);
+    font-family: 'DM Mono', monospace;
+    transform-origin: top right;
+    transition: opacity .3s, transform .3s;
+  }
+  .tuner.collapsed {
+    opacity: 0; pointer-events: none;
+    transform: scale(.9) translateY(-8px);
+  }
+  .tuner-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 8px; }
+  .tuner-label { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(240,240,240,0.35); }
+  .tuner-val { font-size: 11px; color: var(--gold); white-space: nowrap; }
+  .tuner input[type=range] {
+    width: 100%; margin-bottom: 14px; accent-color: #FFD700;
+    height: 3px; background: rgba(255,255,255,0.12); border-radius: 2px; -webkit-appearance: none;
+    transition: opacity .25s;
+  }
+  .tuner input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gold); cursor: pointer; box-shadow: 0 0 8px rgba(255,215,0,0.6);
+  }
+  .tuner.solar #kepSlider, .tuner.solar #kepRow { opacity: .3; pointer-events: none; }
+
+  .solar-btn {
+    width: 100%; display: flex; align-items: center; gap: 9px;
+    padding: 8px 11px; margin-bottom: 12px;
+    border-radius: 8px; cursor: pointer;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(240,240,240,0.5);
+    font-family: 'DM Mono', monospace; font-size: 9.5px;
+    letter-spacing: .12em; text-transform: uppercase;
+    transition: all .25s;
+  }
+  .solar-btn:hover { color: rgba(240,240,240,0.9); border-color: rgba(0,245,255,0.35); }
+  .solar-btn .globe { font-size: 13px; line-height: 1; }
+  .tuner.solar .solar-btn {
+    color: var(--void); background: linear-gradient(90deg, var(--cyan), rgba(0,245,255,0.7));
+    border-color: transparent; font-weight: 600;
+  }
+
+  .tuner-periods {
+    border-top: 1px solid rgba(255,255,255,0.07); padding-top: 10px;
+    font-size: 9px; line-height: 1.8; color: rgba(240,240,240,0.4);
+  }
+  .tuner-periods span { color: rgba(240,240,240,0.7); float: right; }
+  .tuner-note {
+    margin-top: 8px; font-size: 8.5px; line-height: 1.5;
+    color: rgba(240,240,240,0.25); letter-spacing: .04em;
+  }
+
+
+  /* ══════════════ VIEW SYSTEM ══════════════ */
+  .view { display: none; }
+  .view.active { display: flex; }
+  .view-orbit.active { display: block; }
+
+  .mode-switch {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 30; display: flex; gap: 2px; padding: 4px;
+    border-radius: 99px;
+    background: rgba(10,8,18,0.8); backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.09);
+  }
+  .mode-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer;
+    background: none; color: rgba(240,240,240,0.4);
+    font-family: 'DM Mono', monospace; font-size: 15px; line-height: 1;
+    transition: all .25s;
+  }
+  .mode-btn span { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; }
+  .mode-btn:hover { color: rgba(240,240,240,0.85); }
+  .mode-btn.active { background: rgba(255,255,255,0.08); color: var(--gold); }
+
+  /* ── LIST VIEW — full-width bars that expand downward ── */
+  .view-list { flex: 1; overflow: hidden; }
+  .list-scroll { flex: 1; overflow-y: auto; padding: 34px 0 120px 300px; }
+  .list-inner { max-width: 1600px; margin: 0 auto; padding: 0 40px; }
+
+  .list-group-head {
+    display: flex; align-items: center; gap: 12px;
+    margin: 34px 0 14px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .28em; text-transform: uppercase;
+  }
+  .list-group-head:first-child { margin-top: 0; }
+  .list-group-head .bar { flex: 1; height: 1px; }
+
+  .lrow { margin-bottom: 8px; border-radius: 12px; overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.018);
+          transition: border-color .3s, background .3s; }
+  .lrow.open { background: rgba(255,255,255,0.03); }
+
+  /* Grid so every column lines up across rows like a table */
+  .lrow-head {
+    display: grid; align-items: center; gap: 18px;
+    grid-template-columns: 9px minmax(150px, 250px) minmax(130px, 180px) 1fr 104px 14px;
+    width: 100%; padding: 16px 22px; cursor: pointer;
+    background: none; border: none; border-left: 3px solid transparent;
+    text-align: left; transition: background .2s;
+  }
+  .lrow-head:hover { background: rgba(255,255,255,0.028); }
+  .lrow-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .lrow-title {
+    font-size: 15.5px; font-weight: 600; color: rgba(240,240,240,0.88);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lrow-tagline {
+    font-size: 13px; color: rgba(240,240,240,0.35);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lrow-type {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: rgba(240,240,240,0.3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lrow-status {
+    font-family: 'DM Mono', monospace; font-size: 8.5px;
+    letter-spacing: .16em; text-transform: uppercase; text-align: center;
+    padding: 4px 6px; border-radius: 99px; border: 1px solid;
+  }
+  .lrow-chev {
+    font-family: 'DM Mono', monospace; font-size: 10px; text-align: right;
+    color: rgba(240,240,240,0.3); transition: transform .35s;
+  }
+  .lrow.open .lrow-chev { transform: rotate(90deg); }
+
+  .lrow-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .45s cubic-bezier(.25,.46,.45,.94);
+  }
+  .lrow.open .lrow-body { max-height: 1600px; }
+  .lrow-inner { padding: 6px 26px 30px 44px; display: flex; gap: 34px; align-items: flex-start; }
+  .lrow-visual {
+    width: 340px; height: 196px; flex-shrink: 0;
+    position: relative; border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.07); cursor: zoom-in;
+  }
+  .lrow-visual canvas, .lrow-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .lrow-content { flex: 1; min-width: 0; }
+
+
+  /* ── Gallery strip ── */
+  .gallery { margin: 6px 0 26px; }
+  .gallery-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .22em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .gallery-grid {
+    display: grid; gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .gshot {
+    position: relative; border-radius: 9px; overflow: hidden; cursor: zoom-in;
+    border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
+    padding: 0; transition: border-color .25s, transform .25s;
+  }
+  .gshot:hover { transform: translateY(-2px); }
+  .gshot img { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; }
+  .gshot-cap {
+    display: block; padding: 7px 9px 8px; text-align: left;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(240,240,240,0.42); line-height: 1.4;
+  }
+
+  /* Zoom viewer with prev/next */
+  .lightbox.zoomed .zoom-wrap { position: relative; width: 100%; }
+  .zoom-img { width: 100%; height: auto; max-height: 78vh; object-fit: contain; border-radius: 12px; display: block; }
+  .zoom-cap {
+    margin-top: 14px; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .16em; text-transform: uppercase; color: rgba(240,240,240,0.55);
+  }
+  .zoom-count {
+    margin-top: 6px; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .2em; color: rgba(240,240,240,0.25);
+  }
+  .zoom-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+    background: rgba(10,8,18,0.75); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(240,240,240,0.7); font-size: 15px; transition: all .25s;
+  }
+  .zoom-nav:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+  .zoom-prev { left: -60px; } .zoom-next { right: -60px; }
+  @media (max-width: 1200px) { .zoom-prev { left: 8px; } .zoom-next { right: 8px; } }
+
+  @media (max-width: 900px) {
+    .list-inner { padding: 0 20px; }
+    .lrow-head { grid-template-columns: 9px 1fr 96px 14px; gap: 12px; }
+    .lrow-inner { flex-direction: column; padding: 4px 20px 24px; }
+    .lrow-visual { width: 100%; height: 180px; }
+    .lrow-tagline, .lrow-type { display: none; }
+  }
+
+  /* Detail body — shared by list view and card lightbox */
+  .detail-hero {
+    position: relative; height: 190px; border-radius: 14px; overflow: hidden;
+    margin-bottom: 26px; border: 1px solid rgba(255,255,255,0.07);
+    cursor: zoom-in;
+  }
+  .detail-hero canvas, .detail-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .detail-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .3em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .detail-title { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .detail-tagline { font-size: 15px; color: rgba(240,240,240,0.5); margin-bottom: 22px; font-style: italic; }
+  .detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+  .chip {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .14em; text-transform: uppercase;
+    padding: 4px 11px; border-radius: 99px; border: 1px solid;
+  }
+  .detail-sect { margin-bottom: 26px; }
+  .detail-sect h4 {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .22em; text-transform: uppercase;
+    margin-bottom: 10px; font-weight: 400;
+  }
+  .detail-sect p { font-size: 14px; line-height: 1.75; color: rgba(240,240,240,0.55); max-width: 62ch; }
+  .detail-sect ul { list-style: none; }
+  .detail-sect li { padding: 5px 0 5px 22px; position: relative; font-size: 13.5px; color: rgba(240,240,240,0.55); }
+  .detail-sect li::before { content: '○'; position: absolute; left: 3px; font-size: 10px; opacity: .55; }
+  .detail-sect li.done { color: rgba(240,240,240,0.3); }
+  .detail-sect li.done::before { content: '●'; }
+  .detail-stat {
+    display: inline-flex; flex-direction: column; gap: 3px;
+    padding: 14px 20px; border-radius: 12px; margin-bottom: 26px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  }
+  .detail-stat .v { font-family: 'DM Mono', monospace; font-size: 1.5rem; }
+  .detail-stat .l {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .16em; text-transform: uppercase; color: rgba(240,240,240,0.35);
+  }
+  .detail-visit {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .16em; text-transform: uppercase; text-decoration: none;
+    padding: 11px 20px; border-radius: 99px; border: 1px solid;
+    transition: background .25s;
+  }
+  .detail-visit:hover { background: rgba(255,255,255,0.05); }
+
+  /* ── CARD VIEW ── */
+  .view-cards { flex: 1; overflow: hidden; }
+  .cards-scroll { flex: 1; overflow-y: auto; padding: 34px 44px 110px 320px; }
+  .cards-group-head {
+    display: flex; align-items: center; gap: 12px;
+    margin: 34px 0 18px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .28em; text-transform: uppercase;
+  }
+  .cards-group-head:first-child { margin-top: 0; }
+  .cards-group-head .bar { flex: 1; height: 1px; }
+  .cards-grid {
+    display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+  }
+  .pcard {
+    border-radius: 14px; overflow: hidden; cursor: pointer;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    text-align: left; padding: 0;
+    transition: transform .3s, border-color .3s, box-shadow .3s;
+    display: flex; flex-direction: column;
+  }
+  .pcard:hover { transform: translateY(-4px); }
+  .pcard { aspect-ratio: 5 / 7; }   /* tall trading-card proportion */
+  .pcard-thumb { position: relative; flex: 0 0 58%; overflow: hidden; }
+  .pcard-thumb canvas, .pcard-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pcard-status {
+    position: absolute; top: 9px; right: 9px; z-index: 2;
+    font-family: 'DM Mono', monospace; font-size: 8px;
+    letter-spacing: .16em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 99px;
+    background: rgba(3,0,5,0.7); backdrop-filter: blur(6px);
+  }
+  .pcard-body { padding: 13px 14px 14px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .pcard-type {
+    font-family: 'DM Mono', monospace; font-size: 8.5px;
+    letter-spacing: .2em; text-transform: uppercase; margin-bottom: 7px;
+  }
+  .pcard-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: rgba(240,240,240,0.92); }
+  .pcard-tagline {
+    font-size: 11.5px; line-height: 1.5; color: rgba(240,240,240,0.4);
+    flex: 1; margin-bottom: 10px; overflow: hidden;
+  }
+  .pcard-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pcard-tag {
+    font-family: 'DM Mono', monospace; font-size: 8px;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 99px; border: 1px solid;
+  }
+
+  /* ── Lightbox (card expand + thumbnail zoom) ── */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 60;
+    display: flex; align-items: center; justify-content: center; padding: 40px;
+    background: rgba(3,0,5,0.88); backdrop-filter: blur(10px);
+    opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .lightbox.show { opacity: 1; pointer-events: auto; }
+  .lightbox-inner {
+    width: 100%; max-width: 720px; max-height: calc(100vh - 80px);
+    overflow-y: auto; padding: 34px 38px;
+    border-radius: 18px;
+    background: linear-gradient(160deg, rgba(20,18,32,0.97), rgba(8,6,16,0.99));
+    border: 1px solid rgba(255,255,255,0.1);
+    transform: translateY(14px) scale(.98); transition: transform .35s;
+  }
+  .lightbox.show .lightbox-inner { transform: none; }
+  .lightbox-close {
+    position: fixed; top: 26px; right: 30px; z-index: 61;
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    background: rgba(10,8,18,0.8); border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(240,240,240,0.6); font-size: 16px; transition: all .25s;
+  }
+  .lightbox-close:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+  .lightbox.zoomed .lightbox-inner {
+    max-width: 1100px; padding: 0; background: none; border: none;
+  }
+  .lightbox.zoomed .lightbox-inner canvas,
+  .lightbox.zoomed .lightbox-inner img {
+    width: 100%; height: auto; border-radius: 14px; display: block;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { position: relative; width: 100%; padding: 20px 24px; background: none; }
+    .stage { flex-direction: column; }
+    .list-scroll, .cards-scroll { padding-left: 20px; }
+    .map-wrap { flex: 1; min-height: 60vh; }
+    .info-card { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <aside class="sidebar">
+    <button class="brand" id="brandBtn">S<span class="o">O</span>VR<span class="i">I</span>N</button>
+
+    <div class="rings" id="ringList"></div>
+
+    <button class="back-btn" id="backBtn">← Pull back</button>
+  </aside>
+
+  <!-- View mode toggle -->
+  <div class="mode-switch" id="modeSwitch">
+    <button data-mode="orbit" class="mode-btn active" title="Orbit map">◍<span>Orbit</span></button>
+    <button data-mode="list"  class="mode-btn" title="List view">☰<span>List</span></button>
+    <button data-mode="cards" class="mode-btn" title="Card view">▦<span>Cards</span></button>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div class="view view-list" id="viewList">
+    <div class="list-scroll" id="listScroll"></div>
+  </div>
+
+  <!-- CARD VIEW -->
+  <div class="view view-cards" id="viewCards">
+    <div class="cards-scroll" id="cardsScroll"></div>
+  </div>
+
+  <div class="map-wrap view view-orbit" id="mapWrap">
+    <canvas id="map"></canvas>
+
+    <div class="spin-hint" id="spinHint">
+      <span class="spin-arrow">◄</span>
+      <div class="spin-dots" id="spinDots"></div>
+      <span class="spin-arrow">►</span>
+    </div>
+
+
+    <!-- ── SPEED TUNER ── -->
+    <button class="tuner-toggle" id="tunerToggle" title="Orbital speed">⟳</button>
+    <div class="tuner" id="tuner">
+      <div class="tuner-row">
+        <span class="tuner-label">Inner ring period</span>
+        <span class="tuner-val" id="tunerVal">1.50 min</span>
+      </div>
+      <input type="range" id="tunerSlider" min="0" max="1000" step="1" value="640" />
+
+      <div class="tuner-row" id="kepRow">
+        <span class="tuner-label">Ring falloff</span>
+        <span class="tuner-val" id="kepVal">1.50</span>
+      </div>
+      <input type="range" id="kepSlider" min="0" max="250" step="1" value="150" />
+
+      <button class="solar-btn" id="solarBtn" title="Scale to the real solar system">
+        <span class="globe">◍</span>
+        <span id="solarLabel">Real solar system</span>
+      </button>
+
+      <div class="tuner-periods" id="tunerPeriods"></div>
+    </div>
+
+    <!-- Level 3 -->
+    <div class="card-layer" id="cardLayer">
+      <button class="card-close" id="cardClose">✕</button>
+      <div class="info-card" id="infoCard">
+        <div class="card-band">
+          <h2 id="cTitle"></h2>
+          <span class="card-cost" id="cStatus"></span>
+        </div>
+        <div class="card-art" id="cArt">
+          <canvas id="artCanvas"></canvas>
+          <span class="art-fallback" id="cArtGlyph"></span>
+        </div>
+        <div class="card-typeline">
+          <span id="cType"></span>
+          <span id="cOrbit"></span>
+        </div>
+        <div class="card-body">
+          <p class="card-flavor" id="cFlavor"></p>
+          <div id="cSections"></div>
+        </div>
+        <div class="card-foot">
+          <div class="card-stat">
+            <span class="v" id="cStatV">-</span>
+            <span class="l" id="cStatL"></span>
+          </div>
+          <a class="card-visit" id="cVisit" target="_blank" rel="noopener noreferrer">Visit ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const ORBITS = [
+  {
+    name: 'Passion Projects', short: 'Passion',
+    blurb: 'Closest to the core. Built because I wanted them to exist.',
+    color: '#FFD700', radius: 0.30, speed: 0.00040,
+    bodies: [
+      {
+        title: 'Sovrin Console', size: 10, type: 'Desktop Application',
+        status: 'Active',
+        flavor: 'Every agent, every machine, one interface.',
+        stat: '85 days', statLabel: 'Longest continuous uptime',
+        sections: {
+          'What it is': 'A desktop app that unifies every AI agent running across every machine into a single interface. Replaces the earlier Textual-TUI version (Sovrin Terminal) while keeping the same backend.',
+          'How it is built': 'PySide6/Qt front end over a Hermes gateway bridge speaking JSON-RPC. SQLite with FTS5 for full-text search. UDP multicast for LAN discovery, plus a WireGuard relay for reaching machines across networks.',
+          'Current state': ['done:Messaging','done:Full-text search','done:LAN + WAN discovery','todo:Conference rooms','todo:File workspace panel','todo:Voice input','todo:Portable packaging'],
+        },
+      },
+      {
+        title: 'Personal Calendar App', size: 7, type: 'Productivity Tool',
+        status: 'In Progress',
+        flavor: 'Scheduling that answers to me and nobody else.',
+        sections: {
+          'What it is': 'A personal scheduling and calendar tool. Still early, and the shape is being worked out.',
+          'Current state': ['todo:Define core data model','todo:First working prototype'],
+        },
+      },
+    ],
+  },
+  {
+    name: 'Digital Products', short: 'Products',
+    blurb: 'Tools and infrastructure. Built, running, proven.',
+    color: '#00F5FF', radius: 0.46, speed: 0.00030,
+    bodies: [
+      {
+        title: 'Gol', size: 8, type: 'Field Diagnostics',
+        status: 'Shipped',
+        flavor: 'Arrives on a flash drive. Leaves no trace.',
+        sections: {
+          'What it is': 'A portable, no-install field diagnostic and security scanner. Runs straight from a flash drive, performs a full OS scan and produces a report, and leaves nothing behind on the target machine.',
+          'Why it exists': 'On-site diagnostics usually mean installing software on someone else\u2019s computer. This does not.',
+        },
+      },
+      {
+        title: 'Golam', size: 8, type: 'Antivirus Suite',
+        status: 'Shipped',
+        flavor: 'The WARD suite. Gol, with teeth.',
+        sections: {
+          'What it is': 'Wraps Gol\u2019s scanner with ClamAV for real malware detection, packaged as a tray-icon desktop application.',
+          'How it is built': 'pywebview for the interface, pystray for the tray presence, bundled ClamAV binaries for detection.',
+        },
+      },
+      {
+        title: 'Self-Hosted Storage', size: 7, type: 'Infrastructure',
+        status: 'Private',
+        flavor: 'The cloud, if the cloud were mine.',
+        sections: {
+          'What it is': 'A Nextcloud instance running on my own hardware, reachable over WireGuard. No third-party cloud storage anywhere in the loop.',
+          'How it is built': 'Docker Compose stack: Nextcloud, MariaDB, and Caddy as the reverse proxy.',
+        },
+      },
+      {
+        title: 'VPN Relay', size: 6, type: 'Infrastructure',
+        status: 'Private',
+        flavor: 'A door only I know the shape of.',
+        sections: {
+          'What it is': 'A small cloud droplet acting as a WireGuard rendezvous point, so my laptop can reach home machines from anywhere without exposing them directly to the internet.',
+        },
+      },
+    ],
+  },
+  {
+    name: 'My Own Sites', short: 'My Sites',
+    blurb: 'Brands and properties I run myself.',
+    color: '#FF8A3D', radius: 0.62, speed: 0.00021,
+    bodies: [
+      {
+        title: 'Ctrl Alt Help', size: 8, type: 'Service Business',
+        status: 'Live', url: 'https://controlalthelp.ca',
+        flavor: 'The world keeps moving. Nobody should get left behind by it.',
+        sections: {
+          'What it is': 'Tech support built to help elderly people stay relevant in a digital world that keeps moving without them.',
+        },
+      },
+      {
+        title: 'Kaul & Kett Marketing', size: 8, type: 'Agency',
+        status: 'Live', url: 'https://kettmarketing.ca',
+        flavor: 'A human ear. AI hands.',
+        sections: {
+          'What it is': 'An AI-human marketing and brand-growth agency for business owners who need a human ear but AI hands.',
+        },
+      },
+      {
+        title: 'SOVRIN First Build', size: 7, type: 'Original Site',
+        status: 'Live', url: 'https://sovrinprojects.netlify.app',
+        flavor: 'Where the look of this map started.',
+        sections: {
+          'What it is': 'The first version of the SOVRIN site: a cinematic landing page with a particle-swarm solar system, a neural-pathway services map and a transmission-terminal contact form. Originally built on a hosted page builder, then exported and moved to self-hosting.',
+          'How it is built': 'Vite, React, Tailwind, Three.js with bloom post-processing, and Framer Motion. Deployed on Netlify from git.',
+        },
+      },
+      {
+        title: 'This Site', size: 7, type: 'Meta',
+        status: 'Live',
+        flavor: 'You are standing inside the example.',
+        sections: {
+          'What it is': 'The map you are looking at right now. Built from scratch, self-hosted, no page builder and no platform lock-in.',
+          'How it is built': 'React and Vite, canvas-rendered orbit map, deployed from a git push. Migrated off a hosted builder deliberately.',
+        },
+      },
+    ],
+  },
+  {
+    name: 'Client Work', short: 'Clients',
+    blurb: 'Built and handed to the people who own them.',
+    color: '#A78BFA', radius: 0.78, speed: 0.00015,
+    bodies: [
+      { title: 'The Jewelry Revival', size: 7, type: 'E-commerce', status: 'Live', url: 'https://thejewelryrevival.com',
+        flavor: 'Estate jewelry, given a storefront.',
+        sections: { 'What it is': 'Estate-jewelry storefront.' } },
+      { title: 'Antique Overstock', size: 7, type: 'E-commerce', status: 'Live', url: 'https://antiqueoverstock.com',
+        flavor: 'Curated vintage, properly shelved.',
+        sections: { 'What it is': 'Curated vintage and antiques storefront.' } },
+      { title: 'Dusterbusters', size: 7, type: 'Local Business', status: 'Live', url: 'https://calldustbusters.netlify.app',
+        flavor: 'GTA commercial cleaning.',
+        sections: { 'What it is': 'Site for a Greater Toronto Area commercial cleaning company.' } },
+    ],
+  },
+  {
+    name: 'Services Offered', short: 'Services',
+    blurb: 'The outer ring. What you can hire me to build.',
+    color: '#A3E635', radius: 0.94, speed: 0.00010,
+    bodies: [
+      { title: 'Websites', size: 7, type: 'Service', status: 'Available',
+        flavor: 'Not a template. Not a rental.',
+        sections: { 'What you get': 'Bespoke digital experiences, from editorial portfolios to high-conversion platforms. Built to be owned, not leased.' } },
+      { title: 'Automation', size: 7, type: 'Service', status: 'Available',
+        flavor: 'Infrastructure that does not need babysitting.',
+        sections: { 'What you get': 'Workflow systems that eliminate friction and let your operations run without constant manual intervention.' } },
+      { title: 'Local Digital Systems', size: 7, type: 'Service', status: 'Available',
+        flavor: 'Your data. Your rules. Your building.',
+        sections: { 'What you get': 'Custom-built digital infrastructure for sovereign operations, hosted where you decide.' } },
+      { title: 'Privacy-First Tools', size: 7, type: 'Service', status: 'Available',
+        flavor: 'Surveillance made architecturally impossible.',
+        sections: { 'What you get': 'Encrypted solutions built around data sovereignty from the first layer of the stack.' } },
+    ],
+  },
+];
+
+// ══════════════════════════════════════════════
+//  ORBITAL SPEED — anchored to a real reference
+// ══════════════════════════════════════════════
+// The innermost ring completes one revolution in REFERENCE_PERIOD_MIN minutes.
+// Use the tuner (bottom-right) to find the pace you want, then hard-code it here.
+//
+// Candidate anchors:
+//   0.50  → 30 seconds
+//   1.00  → one minute
+//   2.00  → two minutes
+//   3.20  → sunlight reaching Mercury (3 min 12 s)
+//   4.55  → John Cage's 4'33"
+//   6.00  → the Athenian court klepsydra: one speech, one vessel of water
+//   8.32  → sunlight reaching Earth (8 min 19 s)
+//
+let REFERENCE_PERIOD_MIN = 1.5;
+
+// Outer rings derive their periods from Kepler's third law: T ∝ r^1.5.
+// Inner bodies genuinely move faster than outer ones, so the map is
+// physically honest, not just decorative.
+// Lower the exponent toward 1.0 to flatten the difference between rings.
+let KEPLER_EXPONENT = 1.5;
+
+const INNER_RADIUS = ORBITS[0].radius;
+
+const T0 = performance.now();
+function driftAngle(orbit) {
+  const elapsedSec = (performance.now() - T0) / 1000;
+  return (elapsedSec / orbit._periodSec) * Math.PI * 2 + (orbit._phase || 0);
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const LEVEL = { SYSTEM: 0, ORBIT: 1, CARD: 2 };
+let level = LEVEL.SYSTEM;
+let currentOrbit = null;     // index when zoomed
+let focusIdx = 0;            // which body is centred in orbit view
+let spinTarget = 0;          // target rotation (radians)
+let spinCurrent = 0;         // eased rotation
+let camZoom = 1;             // 1 = system view
+let camZoomTarget = 1;
+let hoverRing = null;
+
+const canvas = document.getElementById('map');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('mapWrap');
+
+const spinHint = document.getElementById('spinHint');
+const spinDots = document.getElementById('spinDots');
+const backBtn = document.getElementById('backBtn');
+const cardLayer = document.getElementById('cardLayer');
+
+let W=0,H=0,CX=0,CY=0,R=0;
+const TILT = 0.40;
+
+// ── Normalize to the projects.json contract ──
+// The site reads projects.json, where `sections` is an ARRAY of
+// {heading, body?, checklist?} and the one-liner is `tagline`.
+// This coerces the prototype's older shape so both render identically.
+function normalizeSections(sections) {
+  if (!sections) return [];
+  if (Array.isArray(sections)) return sections;
+  return Object.entries(sections).map(([heading, content]) => {
+    if (Array.isArray(content)) {
+      return {
+        heading,
+        checklist: content.map(item => ({
+          done: String(item).startsWith('done:'),
+          text: String(item).replace(/^(done|todo):/, ''),
+        })),
+      };
+    }
+    return { heading, body: content };
+  });
+}
+
+ORBITS.forEach((o, oi) => {
+  if (o.id == null) o.id = oi + 1;
+  o.bodies.forEach((b, bi) => {
+    if (!b.slug) b.slug = b.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (b.tagline == null && b.flavor) b.tagline = b.flavor;
+    b.sections = normalizeSections(b.sections);
+    b._baseAngle = (bi / o.bodies.length) * Math.PI * 2 + oi * 0.7;
+    b._angle = b._baseAngle;
+  });
+});
+
+function resize() {
+  const rect = wrap.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = rect.width; H = rect.height;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  CX = W*0.52; CY = H/2;   // map is full width now; slight right bias clears the menu text
+  bgFrame = -999;          // invalidate the cached backdrop
+  R = Math.min(W, H) * 1.45;     // orbital plane scale
+}
+window.addEventListener('resize', resize);
+window.addEventListener('resize', () => {
+  cacheAnchors(listScroll); cacheAnchors(cardsScroll);
+}, { passive: true });
+
+// ══════════════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════════════
+const ringList = document.getElementById('ringList');
+ORBITS.forEach((orbit, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'ring-item';
+  btn.innerHTML = `<span class="ring-num">0${i+1}</span> ${orbit.name}`;
+  btn.onmouseenter = () => { if (viewMode === 'orbit' && level === LEVEL.SYSTEM) hoverRing = i; };
+  btn.onmouseleave = () => { hoverRing = null; };
+  btn.onclick = () => navigateOrbit(i);
+  ringList.appendChild(btn);
+});
+
+// Which orbit the menu should highlight, per view.
+let navOrbit = null;
+
+function paintSidebar() {
+  const active = viewMode === 'orbit' ? currentOrbit : navOrbit;
+  document.querySelectorAll('.ring-item').forEach((e, i) => {
+    const on = active === i;
+    e.classList.toggle('active', on);
+    e.style.background = on
+      ? `linear-gradient(90deg, ${ORBITS[i].color}, ${ORBITS[i].color}bb)`
+      : '';
+  });
+}
+
+// The 5-element menu is navigation everywhere: it zooms the map in orbit
+// view, and scrolls to that group in list and card view.
+function navigateOrbit(i) {
+  if (viewMode === 'orbit') { enterOrbit(i); return; }
+  const scroller = viewMode === 'list' ? listScroll : cardsScroll;
+  const anchor = scroller.querySelector(`[data-orbit-anchor="${i}"]`);
+  if (anchor) {
+    const top = anchor.offsetTop - 18;
+    scroller.scrollTo({ top, behavior: 'smooth' });
+  }
+  navOrbit = i;
+  paintSidebar();
+}
+
+// Highlight whichever group is currently in view while scrolling.
+// Reading offsetTop on every scroll event forces a layout recalculation,
+// which is what made scrolling feel heavy. Offsets are cached instead,
+// and the check is throttled to one per animation frame.
+const anchorCache = new WeakMap();
+function cacheAnchors(scroller) {
+  const anchors = [...scroller.querySelectorAll('[data-orbit-anchor]')];
+  anchorCache.set(scroller, anchors.map(a => a.offsetTop));
+  return anchorCache.get(scroller);
+}
+let spyQueued = false;
+function spyScroll(scroller) {
+  if (spyQueued) return;
+  spyQueued = true;
+  requestAnimationFrame(() => {
+    spyQueued = false;
+    const tops = anchorCache.get(scroller) || cacheAnchors(scroller);
+    if (!tops.length) return;
+    const y = scroller.scrollTop + 90;
+    let found = 0;
+    tops.forEach((top, idx) => { if (top <= y) found = idx; });
+    // The last section is often too short to reach the trigger line,
+    // so hitting the bottom of the page counts as being inside it.
+    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4;
+    if (atBottom) found = tops.length - 1;
+    if (navOrbit !== found) { navOrbit = found; paintSidebar(); }
+  });
+}
+
+document.getElementById('brandBtn').onclick = () => goSystem();
+backBtn.onclick = () => { level === LEVEL.CARD ? closeCard() : goSystem(); };
+document.getElementById('cardClose').onclick = () => closeCard();
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function goSystem() {
+  level = LEVEL.SYSTEM;
+  currentOrbit = null;
+  camZoomTarget = 1;
+  cardLayer.classList.remove('show');
+  backBtn.classList.remove('show');
+  spinHint.classList.remove('show');
+  paintSidebar();
+  syncNodeVisibility();
+}
+
+function enterOrbit(i) {
+  level = LEVEL.ORBIT;
+  currentOrbit = i;
+  focusIdx = 0;
+  const orbit = ORBITS[i];
+  // Zoom so the chosen ring roughly fills the view
+  camZoomTarget = 0.94 / orbit.radius;
+  spinTarget = -orbit.bodies[0]._baseAngle + Math.PI/2;
+  cardLayer.classList.remove('show');
+  backBtn.classList.add('show');
+  spinHint.classList.add('show');
+  buildSpinDots(orbit.bodies.length);
+  updateLocation();
+  paintSidebar();
+  syncNodeVisibility();
+}
+
+function buildSpinDots(n) {
+  spinDots.innerHTML = '';
+  for (let i=0;i<n;i++) {
+    const d = document.createElement('div');
+    d.className = 'spin-dot' + (i===focusIdx?' on':'');
+    spinDots.appendChild(d);
+  }
+}
+function paintSpinDots() {
+  [...spinDots.children].forEach((d,i)=>d.classList.toggle('on', i===focusIdx));
+}
+
+function stepFocus(dir) {
+  if (level !== LEVEL.ORBIT) return;
+  const orbit = ORBITS[currentOrbit];
+  const n = orbit.bodies.length;
+  focusIdx = (focusIdx + dir + n) % n;
+  // rotate so the focused body lands at the front (bottom-centre of ellipse)
+  const step = (Math.PI * 2) / n;
+  spinTarget -= dir * step;
+  paintSpinDots();
+  updateLocation();
+}
+
+function updateLocation() {
+  const orbit = ORBITS[currentOrbit];
+  const body = orbit.bodies[focusIdx];
+}
+
+// Scroll to spin
+wrap.addEventListener('wheel', (e) => {
+  if (level !== LEVEL.ORBIT) return;
+  e.preventDefault();
+  if (Math.abs(e.deltaY) < 4 && Math.abs(e.deltaX) < 4) return;
+  const now = Date.now();
+  if (now - (wrap._lastWheel||0) < 260) return;
+  wrap._lastWheel = now;
+  stepFocus(e.deltaY > 0 || e.deltaX > 0 ? 1 : -1);
+}, { passive: false });
+
+// Arrow keys
+window.addEventListener('keydown', (e) => {
+  if (viewMode === 'orbit' && level === LEVEL.ORBIT) {
+    if (e.key === 'ArrowRight') stepFocus(1);
+    if (e.key === 'ArrowLeft') stepFocus(-1);
+    if (e.key === 'Enter') openCard(currentOrbit, focusIdx);
+  }
+  if (lightbox.classList.contains('show') && lightbox.classList.contains('zoomed')) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); stepZoom(1); return; }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); stepZoom(-1); return; }
+  }
+  if (e.key === 'Escape') {
+    if (lightbox.classList.contains('show')) { closeLightbox(); return; }
+    if (viewMode !== 'orbit') return;
+    level === LEVEL.CARD ? closeCard() : goSystem();
+  }
+  // list view: arrow keys move through the rail
+  if (viewMode === 'list' && listOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    e.preventDefault();
+    const flat = [];
+    ORBITS.forEach((o,oi) => o.bodies.forEach((b,bi) => flat.push([oi,bi])));
+    let idx = flat.findIndex(([a,b]) => a===listOpen.oi && b===listOpen.bi);
+    idx = (idx + (e.key === 'ArrowDown' ? 1 : -1) + flat.length) % flat.length;
+    toggleList(flat[idx][0], flat[idx][1], true);
+    listScroll.querySelectorAll('.lrow')[idx]?.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+});
+
+// Drag to spin
+let dragging = false, dragStart = 0, dragAccum = 0;
+wrap.addEventListener('pointerdown', (e) => {
+  if (level !== LEVEL.ORBIT) return;
+  dragging = true; dragStart = e.clientX; dragAccum = 0;
+});
+window.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - dragStart;
+  dragAccum += Math.abs(dx);
+  if (Math.abs(dx) > 70) { stepFocus(dx > 0 ? -1 : 1); dragStart = e.clientX; }
+});
+window.addEventListener('pointerup', () => { dragging = false; });
+
+// ══════════════════════════════════════════════
+//  LEVEL 3 — CARD
+// ══════════════════════════════════════════════
+function openCard(oi, bi) {
+  const orbit = ORBITS[oi], b = orbit.bodies[bi];
+  level = LEVEL.CARD;
+
+  const card = document.getElementById('infoCard');
+  card.style.setProperty('--card-accent', orbit.color + '59');
+  card.style.setProperty('--card-accent-dim', orbit.color + '1a');
+  card.style.setProperty('--card-accent-text', orbit.color);
+  card.style.setProperty('--card-glow', orbit.color + '44');
+
+  document.getElementById('cTitle').textContent = b.title;
+  document.getElementById('cStatus').textContent = b.status || '';
+  document.getElementById('cType').textContent = b.type || '';
+  document.getElementById('cOrbit').textContent = 'Orbit 0' + (oi+1);
+  document.getElementById('cFlavor').textContent = b.flavor || '';
+  document.getElementById('cArtGlyph').textContent = b.title.charAt(0);
+
+  // stat footer
+  document.getElementById('cStatV').textContent = b.stat || '-';
+  document.getElementById('cStatL').textContent = b.statLabel || (b.status || '');
+
+  const visit = document.getElementById('cVisit');
+  if (b.url) { visit.href = b.url; visit.style.display = ''; }
+  else visit.style.display = 'none';
+
+  // sections
+  const wrapS = document.getElementById('cSections');
+  wrapS.innerHTML = '';
+  Object.entries(b.sections || {}).forEach(([title, content], idx) => {
+    const sect = document.createElement('div');
+    sect.className = 'sect' + (idx === 0 ? ' open' : '');
+
+    const head = document.createElement('button');
+    head.className = 'sect-head';
+    head.innerHTML = `<span>${title}</span><span class="chev">▶</span>`;
+    head.onclick = () => sect.classList.toggle('open');
+
+    const body = document.createElement('div');
+    body.className = 'sect-body';
+    if (Array.isArray(content)) {
+      const ul = document.createElement('ul');
+      content.forEach(item => {
+        const li = document.createElement('li');
+        const done = item.startsWith('done:');
+        li.className = done ? 'done' : '';
+        li.textContent = item.replace(/^(done|todo):/, '');
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    } else {
+      body.textContent = content;
+    }
+
+    sect.appendChild(head); sect.appendChild(body);
+    wrapS.appendChild(sect);
+  });
+
+  startArt(orbit.color);
+  cardLayer.classList.add('show');
+  backBtn.classList.add('show');
+}
+
+function closeCard() {
+  cardLayer.classList.remove('show');
+  level = currentOrbit !== null ? LEVEL.ORBIT : LEVEL.SYSTEM;
+  stopArt();
+}
+
+// Mini particle art inside the card
+let artRAF = null;
+function startArt(color) {
+  const c = document.getElementById('artCanvas');
+  const actx = c.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width*dpr; c.height = rect.height*dpr;
+  actx.setTransform(dpr,0,0,dpr,0,0);
+  const w = rect.width, h = rect.height;
+  const parts = Array.from({length: 46}, () => ({
+    a: Math.random()*Math.PI*2,
+    r: 12 + Math.random()*Math.min(w,h)*0.42,
+    s: 0.0016 + Math.random()*0.006,
+    sz: 0.6 + Math.random()*1.9,
+    o: 0.15 + Math.random()*0.5,
+  }));
+  let f=0;
+  function loop() {
+    artRAF = requestAnimationFrame(loop);
+    f++;
+    actx.clearRect(0,0,w,h);
+    const g = actx.createRadialGradient(w/2,h/2,0,w/2,h/2,h*0.75);
+    g.addColorStop(0, color+'16'); g.addColorStop(1, color+'00');
+    actx.fillStyle=g; actx.fillRect(0,0,w,h);
+    parts.forEach(p=>{
+      p.a += p.s;
+      const x = w/2 + Math.cos(p.a)*p.r;
+      const y = h/2 + Math.sin(p.a)*p.r*0.55;
+      const tw = 0.5+0.5*Math.sin(f*0.03+p.a*4);
+      actx.beginPath(); actx.arc(x,y,p.sz,0,Math.PI*2);
+      actx.fillStyle = color + Math.floor(p.o*tw*255).toString(16).padStart(2,'0');
+      actx.fill();
+    });
+    actx.beginPath(); actx.arc(w/2,h/2,4,0,Math.PI*2);
+    actx.fillStyle='#fff'; actx.shadowColor=color; actx.shadowBlur=16;
+    actx.fill(); actx.shadowBlur=0;
+  }
+  loop();
+}
+function stopArt() { if (artRAF) cancelAnimationFrame(artRAF); artRAF = null; }
+
+// ══════════════════════════════════════════════
+//  NODES (DOM hit areas + labels)
+// ══════════════════════════════════════════════
+ORBITS.forEach((orbit, oi) => {
+  orbit.bodies.forEach((b, bi) => {
+    const btn = document.createElement('button');
+    btn.className = 'node-btn';
+    btn.setAttribute('aria-label', b.title);
+    btn.onclick = () => {
+      if (level === LEVEL.SYSTEM) enterOrbit(oi);
+      else if (level === LEVEL.ORBIT && currentOrbit === oi) {
+        if (bi === focusIdx) openCard(oi, bi);
+        else { focusIdx = bi; spinTarget = -b._baseAngle + Math.PI/2; paintSpinDots(); updateLocation(); }
+      }
+    };
+    wrap.appendChild(btn); b._el = btn;
+
+    const lab = document.createElement('div');
+    lab.className = 'node-label';
+    lab.textContent = b.title;
+    wrap.appendChild(lab); b._label = lab;
+  });
+});
+
+function syncNodeVisibility() {
+  ORBITS.forEach((o, oi) => o.bodies.forEach(b => {
+    const visible = level === LEVEL.SYSTEM || currentOrbit === oi;
+    b._el.style.pointerEvents = visible ? 'auto' : 'none';
+  }));
+}
+
+// ══════════════════════════════════════════════
+//  BACKDROP
+// ══════════════════════════════════════════════
+const STARS = Array.from({length: 260}, () => ({
+  x: Math.random(), y: Math.random(),
+  s: 0.3+Math.random()*1.2, o: 0.05+Math.random()*0.3,
+  p: Math.random()*Math.PI*2, tw: 0.005+Math.random()*0.018,
+  depth: 0.3 + Math.random()*0.7,
+}));
+// Layered nebula field. Colours pulled toward teal / green / violet / warm amber
+// so the void reads as deep space rather than flat black — kept low-opacity
+// so it never competes with the rings.
+const NEBULAE = [
+  // deep base washes
+  { x:0.30,y:0.24,r:520,c:'0,120,190',  o:0.045, dx:0.00006, dy:0.00003 },
+  { x:0.70,y:0.70,r:480,c:'25,140,120', o:0.038, dx:-0.00005,dy:0.00004 },
+  { x:0.50,y:0.50,r:600,c:'70,40,150',  o:0.032, dx:0.00003, dy:-0.00004 },
+  // mid colour
+  { x:0.16,y:0.66,r:340,c:'0,180,200',  o:0.030, dx:0.00008, dy:-0.00005 },
+  { x:0.84,y:0.28,r:330,c:'190,110,40', o:0.026, dx:-0.00007,dy:0.00006 },
+  { x:0.62,y:0.16,r:300,c:'40,160,140', o:0.024, dx:0.00004, dy:0.00007 },
+  { x:0.24,y:0.86,r:310,c:'110,60,170', o:0.024, dx:-0.00006,dy:-0.00003 },
+  // warm accents near the core
+  { x:0.44,y:0.44,r:260,c:'210,150,60', o:0.022, dx:0.00005, dy:0.00005 },
+  { x:0.56,y:0.60,r:240,c:'0,200,180',  o:0.020, dx:-0.00004,dy:0.00006 },
+  // faint far wisps
+  { x:0.08,y:0.34,r:280,c:'60,90,180',  o:0.018, dx:0.00007, dy:0.00004 },
+  { x:0.92,y:0.80,r:290,c:'20,150,160', o:0.016, dx:-0.00003,dy:-0.00006 },
+  { x:0.38,y:0.08,r:250,c:'150,80,160', o:0.015, dx:0.00006, dy:0.00003 },
+];
+
+let frame = 0;
+
+// ── Backdrop cache ──
+// Nebulae and stars were redrawn from scratch every frame: 12 radial
+// gradients plus 260 arcs. They drift slowly enough that refreshing a
+// few times a second is indistinguishable, so they're rendered to an
+// offscreen canvas and blitted instead.
+const bg = document.createElement('canvas');
+const bgx = bg.getContext('2d');
+let bgFrame = -999, bgZoom = -1;
+const BG_REFRESH = 12;          // frames between backdrop redraws
+
+function renderBackdrop() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  bg.width = W * dpr; bg.height = H * dpr;
+  bgx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bgx.clearRect(0, 0, W, H);
+
+  const par = 1 + (camZoom - 1) * 0.12;
+  const tSec = (performance.now() - T0) / 1000;
+
+  NEBULAE.forEach(n => {
+    const driftX = Math.sin(tSec * n.dx * 60) * 0.05;
+    const driftY = Math.cos(tSec * n.dy * 60) * 0.04;
+    const bxp = (n.x + driftX) * W, byp = (n.y + driftY) * H;
+    const nx = CX + (bxp - CX) * par, ny = CY + (byp - CY) * par;
+    const g = bgx.createRadialGradient(nx, ny, 0, nx, ny, n.r * par);
+    g.addColorStop(0, `rgba(${n.c},${n.o})`);
+    g.addColorStop(0.35, `rgba(${n.c},${n.o * 0.6})`);
+    g.addColorStop(0.7, `rgba(${n.c},${n.o * 0.22})`);
+    g.addColorStop(1, `rgba(${n.c},0)`);
+    bgx.beginPath(); bgx.ellipse(nx, ny, n.r * par, n.r * 0.58 * par, 0.25, 0, Math.PI * 2);
+    bgx.fillStyle = g; bgx.fill();
+  });
+
+  STARS.forEach(st => {
+    const sx = CX + (st.x * W - CX) * (1 + (camZoom - 1) * st.depth * 0.35);
+    const sy = CY + (st.y * H - CY) * (1 + (camZoom - 1) * st.depth * 0.35);
+    if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) return;
+    const tw = 0.4 + 0.6 * Math.sin(frame * st.tw + st.p);
+    bgx.beginPath(); bgx.arc(sx, sy, st.s, 0, Math.PI * 2);
+    bgx.fillStyle = `rgba(255,255,255,${st.o * tw})`; bgx.fill();
+  });
+}
+
+function draw() {
+  requestAnimationFrame(draw);
+  // Nothing to render unless the map is on screen. This is the single
+  // biggest win for scroll smoothness in list and card view.
+  if (viewMode !== 'orbit') return;
+  frame++;
+
+  // ease camera + spin
+  camZoom += (camZoomTarget - camZoom) * 0.055;
+  spinCurrent += (spinTarget - spinCurrent) * 0.075;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Blit the cached backdrop; refresh it only every few frames, or
+  // immediately when the camera zoom has moved enough to matter.
+  if (frame - bgFrame >= BG_REFRESH || Math.abs(camZoom - bgZoom) > 0.02) {
+    renderBackdrop();
+    bgFrame = frame; bgZoom = camZoom;
+  }
+  ctx.drawImage(bg, 0, 0, W, H);
+
+  const inOrbit = level !== LEVEL.SYSTEM && currentOrbit !== null;
+
+  // rings
+  ORBITS.forEach((orbit, oi)=>{
+    const rx = orbit.radius * R * 0.5 * camZoom;
+    const ry = rx * TILT;
+    if (rx > Math.max(W,H)*2.2) return;
+
+    const isCurrent = currentOrbit === oi;
+    const focused = hoverRing===oi || isCurrent;
+    let alpha = focused ? '55' : '1c';
+    if (inOrbit && !isCurrent) alpha = '0a';
+
+    ctx.beginPath(); ctx.ellipse(CX,CY,rx,ry,0,0,Math.PI*2);
+    ctx.strokeStyle = orbit.color + alpha;
+    ctx.lineWidth = focused ? 1.7 : 1;
+    ctx.stroke();
+
+    if (focused) {
+      ctx.beginPath(); ctx.ellipse(CX,CY,rx,ry,0,0,Math.PI*2);
+      ctx.strokeStyle = orbit.color+'12'; ctx.lineWidth = 9; ctx.stroke();
+    }
+  });
+
+  // core
+  const coreR = 70 * Math.min(camZoom, 1.8);
+  const cg = ctx.createRadialGradient(CX,CY,0,CX,CY,coreR);
+  cg.addColorStop(0,'rgba(255,255,255,0.30)');
+  cg.addColorStop(0.25,'rgba(255,215,0,0.15)');
+  cg.addColorStop(0.6,'rgba(0,245,255,0.05)');
+  cg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.arc(CX,CY,coreR,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+  const pulse = 1+0.06*Math.sin(frame*0.02);
+  ctx.beginPath(); ctx.arc(CX,CY,11*pulse*Math.min(camZoom,1.5),0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.shadowColor='#FFD700'; ctx.shadowBlur=28; ctx.fill(); ctx.shadowBlur=0;
+
+  // bodies
+  ORBITS.forEach((orbit, oi)=>{
+    const rx = orbit.radius * R * 0.5 * camZoom;
+    const ry = rx * TILT;
+    const isCurrent = currentOrbit === oi;
+
+    orbit.bodies.forEach((b, bi)=>{
+      // in system view bodies drift; in orbit view the ring is spun by user
+      if (!inOrbit) b._angle = b._baseAngle + driftAngle(orbit);
+      else if (isCurrent) b._angle = b._baseAngle + spinCurrent;
+      else b._angle = b._baseAngle + driftAngle(orbit);
+
+      const x = CX + Math.cos(b._angle)*rx;
+      const y = CY + Math.sin(b._angle)*ry;
+
+      // cull far off-screen
+      if (x < -260 || x > W+260 || y < -200 || y > H+200) {
+        b._el.style.display='none'; b._label.style.display='none'; return;
+      }
+      b._el.style.display=''; b._label.style.display='';
+
+      const isFocus = inOrbit && isCurrent && bi === focusIdx;
+      const dimOther = (hoverRing!==null && hoverRing!==oi && !inOrbit) || (inOrbit && !isCurrent);
+
+      // distance from the front-centre point → drives emphasis in orbit view
+      let emphasis = 1;
+      if (inOrbit && isCurrent) {
+        const front = Math.PI/2;
+        let d = Math.abs(((b._angle - front + Math.PI*3) % (Math.PI*2)) - Math.PI);
+        emphasis = Math.max(0.12, 1 - d/1.5);
+      }
+
+      const depth = 0.78 + 0.22*((Math.sin(b._angle)+1)/2);
+      let size = b.size * depth;
+      if (inOrbit && isCurrent) size *= (0.8 + emphasis*1.5);
+      if (isFocus) size *= 1.15;
+
+      let alpha = dimOther ? 0.16 : 1;
+      if (inOrbit && isCurrent) alpha = 0.25 + emphasis*0.75;
+
+      ctx.globalAlpha = alpha;
+
+      const halo = ctx.createRadialGradient(x,y,0,x,y,size*6);
+      halo.addColorStop(0, orbit.color + (isFocus?'4d':'20'));
+      halo.addColorStop(1, orbit.color+'00');
+      ctx.beginPath(); ctx.arc(x,y,size*6,0,Math.PI*2); ctx.fillStyle=halo; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2);
+      ctx.fillStyle=orbit.color;
+      ctx.shadowColor=orbit.color; ctx.shadowBlur = isFocus?34:12;
+      ctx.fill(); ctx.shadowBlur=0;
+
+      ctx.beginPath(); ctx.arc(x-size*0.26,y-size*0.26,size*0.3,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fill();
+
+      // focus ring
+      if (isFocus) {
+        ctx.beginPath(); ctx.arc(x,y,size+11+Math.sin(frame*0.05)*2,0,Math.PI*2);
+        ctx.strokeStyle=orbit.color+'88'; ctx.lineWidth=1.2; ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+
+      // DOM sync
+      b._el.style.left = x+'px'; b._el.style.top = y+'px';
+      b._el.style.width = b._el.style.height = Math.max(48, size*3)+'px';
+
+      b._label.style.left = x+'px';
+      b._label.style.top = (y+size+13)+'px';
+      b._label.style.opacity = alpha;
+      b._label.classList.toggle('focused', isFocus);
+      b._label.style.color = isFocus ? orbit.color : orbit.color+'80';
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
+//  SPEED TUNER
+// ══════════════════════════════════════════════
+const tuner = document.getElementById('tuner');
+const tunerSlider = document.getElementById('tunerSlider');
+const kepSlider = document.getElementById('kepSlider');
+const tunerVal = document.getElementById('tunerVal');
+const kepVal = document.getElementById('kepVal');
+const tunerPeriods = document.getElementById('tunerPeriods');
+const solarBtn = document.getElementById('solarBtn');
+const solarLabel = document.getElementById('solarLabel');
+
+// Log scale: slider 0–1000 maps to 3 seconds … 3 hours.
+// Log so the fast end (3s–60s) gets as much travel as the slow end.
+const MIN_SEC = 3, MAX_SEC = 10800;
+function sliderToSec(v) {
+  const t = v / 1000;
+  return MIN_SEC * Math.pow(MAX_SEC / MIN_SEC, t);
+}
+function secToSlider(sec) {
+  return 1000 * Math.log(sec / MIN_SEC) / Math.log(MAX_SEC / MIN_SEC);
+}
+
+// Real solar system: actual sidereal orbital periods, in Earth days.
+// Ratios between these are the genuine ones — Jupiter really does take
+// ~49x longer to go around than Mercury.
+const REAL_PLANETS = [
+  { name: 'Mercury', days: 87.97 },
+  { name: 'Venus',   days: 224.70 },
+  { name: 'Earth',   days: 365.25 },
+  { name: 'Mars',    days: 686.98 },
+  { name: 'Jupiter', days: 4332.59 },
+];
+let solarMode = false;
+
+function recomputePeriods() {
+  if (solarMode) {
+    // anchor ring 1 to the chosen inner period, scale the rest by real ratios
+    const base = REFERENCE_PERIOD_MIN * 60;
+    ORBITS.forEach((o, i) => {
+      const p = REAL_PLANETS[Math.min(i, REAL_PLANETS.length - 1)];
+      o._periodSec = base * (p.days / REAL_PLANETS[0].days);
+      o._planet = p.name;
+    });
+  } else {
+    ORBITS.forEach(o => {
+      const periodMin = REFERENCE_PERIOD_MIN * Math.pow(o.radius / INNER_RADIUS, KEPLER_EXPONENT);
+      o._periodSec = periodMin * 60;
+      o._planet = null;
+    });
+  }
+}
+
+function fmt(sec) {
+  if (sec < 60) return sec.toFixed(sec < 10 ? 1 : 0) + 's';
+  if (sec < 3600) {
+    const m = Math.floor(sec/60), s = Math.round(sec%60);
+    return m + 'm' + (s ? ' ' + s + 's' : '');
+  }
+  const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
+  return h + 'h' + (m ? ' ' + m + 'm' : '');
+}
+
+function paintTuner() {
+  tunerVal.textContent = fmt(REFERENCE_PERIOD_MIN * 60);
+  kepVal.textContent = KEPLER_EXPONENT.toFixed(2);
+  tuner.classList.toggle('solar', solarMode);
+  solarLabel.textContent = solarMode ? 'Real ratios: on' : 'Real solar system';
+
+  tunerPeriods.innerHTML = ORBITS.map((o,i) =>
+    `${solarMode ? o._planet : '0'+(i+1)+' '+o.short}<span>${fmt(o._periodSec)}</span>`
+  ).join('<br>')
+  + (solarMode
+      ? `<div class="tuner-note">True sidereal ratios. Jupiter takes 49× Mercury\u2019s year.</div>`
+      : '');
+}
+
+function applyTuner(fromSlider = true) {
+  // preserve visual position so changing speed never jumps the bodies
+  const snapshot = ORBITS.map(o => driftAngle(o));
+  if (fromSlider) {
+    REFERENCE_PERIOD_MIN = sliderToSec(+tunerSlider.value) / 60;
+    KEPLER_EXPONENT = kepSlider.value / 100;
+  }
+  recomputePeriods();
+  ORBITS.forEach((o,i) => { o._phase = (o._phase || 0) + snapshot[i] - driftAngle(o); });
+  paintTuner();
+}
+
+tunerSlider.oninput = () => applyTuner(true);
+kepSlider.oninput = () => applyTuner(true);
+solarBtn.onclick = () => { solarMode = !solarMode; applyTuner(false); };
+
+tunerSlider.value = secToSlider(REFERENCE_PERIOD_MIN * 60);
+recomputePeriods();
+paintTuner();
+
+// Collapse / expand
+const tunerToggle = document.getElementById('tunerToggle');
+let tunerOpen = false;
+function paintTunerOpen() {
+  tuner.classList.toggle('collapsed', !tunerOpen);
+  tunerToggle.classList.toggle('open', tunerOpen);
+}
+tunerToggle.onclick = () => { tunerOpen = !tunerOpen; paintTunerOpen(); };
+paintTunerOpen();
+
+
+// ══════════════════════════════════════════════
+//  THUMBNAIL SYSTEM
+//  Real images when a project has one; otherwise a deterministic
+//  procedural starfield keyed to the slug — so every project looks
+//  intentional rather than broken while artwork is still missing.
+// ══════════════════════════════════════════════
+function hashSlug(str) {
+  str = String(str || 'sovrin');
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function seededRandom(seed) {
+  let s = seed;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+function paintThumb(canvas, project, color, opts = {}) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  // A hidden container measures 0 — fall back to the declared size.
+  const w = Math.round(rect.width  || opts.w || 300);
+  const h = Math.round(rect.height || opts.h || 140);
+  if (!w || !h) return;
+  canvas.style.width = '100%'; canvas.style.height = '100%';
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const c = canvas.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const rnd = seededRandom(hashSlug(project.slug || project.title));
+
+  // base
+  c.fillStyle = '#05030b';
+  c.fillRect(0, 0, w, h);
+
+  // nebula washes, seeded so each project has its own signature
+  const hues = [color, '#00F5FF', '#8A2BE2', '#1E9E8A'];
+  for (let i = 0; i < 4; i++) {
+    const x = rnd() * w, y = rnd() * h, r = (0.35 + rnd() * 0.5) * Math.max(w, h);
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    const col = hues[Math.floor(rnd() * hues.length)];
+    g.addColorStop(0, col + '22'); g.addColorStop(0.5, col + '0d'); g.addColorStop(1, col + '00');
+    c.fillStyle = g;
+    c.beginPath(); c.ellipse(x, y, r, r * 0.7, rnd() * 3, 0, Math.PI * 2); c.fill();
+  }
+
+  // stars
+  for (let i = 0; i < 90; i++) {
+    const x = rnd() * w, y = rnd() * h, sz = 0.3 + rnd() * 1.4;
+    c.beginPath(); c.arc(x, y, sz, 0, Math.PI * 2);
+    c.fillStyle = `rgba(255,255,255,${0.08 + rnd() * 0.4})`; c.fill();
+  }
+
+  // orbit arcs + a body, echoing the map
+  const cx = w * (0.28 + rnd() * 0.44), cy = h * (0.42 + rnd() * 0.2);
+  for (let i = 1; i <= 3; i++) {
+    const rr = (h * 0.18) * i * (0.9 + rnd() * 0.4);
+    c.beginPath(); c.ellipse(cx, cy, rr, rr * 0.34, -0.2, 0, Math.PI * 2);
+    c.strokeStyle = color + '22'; c.lineWidth = 1; c.stroke();
+  }
+  const bodyR = 8 + rnd() * 10;
+  const bg = c.createRadialGradient(cx, cy, 0, cx, cy, bodyR * 4);
+  bg.addColorStop(0, color + '55'); bg.addColorStop(1, color + '00');
+  c.beginPath(); c.arc(cx, cy, bodyR * 4, 0, Math.PI * 2); c.fillStyle = bg; c.fill();
+  c.beginPath(); c.arc(cx, cy, bodyR, 0, Math.PI * 2);
+  c.fillStyle = color; c.shadowColor = color; c.shadowBlur = 22; c.fill(); c.shadowBlur = 0;
+  c.beginPath(); c.arc(cx - bodyR * 0.28, cy - bodyR * 0.28, bodyR * 0.3, 0, Math.PI * 2);
+  c.fillStyle = 'rgba(255,255,255,0.8)'; c.fill();
+
+  // vignette so text sits comfortably on top
+  const vg = c.createLinearGradient(0, h * 0.35, 0, h);
+  vg.addColorStop(0, 'rgba(3,0,5,0)'); vg.addColorStop(1, 'rgba(3,0,5,0.55)');
+  c.fillStyle = vg; c.fillRect(0, 0, w, h);
+}
+
+const PENDING_THUMBS = [];
+function mountVisual(container, project, color, opts) {
+  container.innerHTML = '';
+  if (project.image) {
+    const img = document.createElement('img');
+    img.src = project.image; img.alt = project.title;
+    container.appendChild(img);
+  } else {
+    const cv = document.createElement('canvas');
+    container.appendChild(cv);
+    const job = { cv, project, color, opts };
+    PENDING_THUMBS.push(job);
+    requestAnimationFrame(() => paintThumb(cv, project, color, opts));
+  }
+}
+// Repaint every thumbnail that was built while its container was hidden.
+function repaintThumbs() {
+  requestAnimationFrame(() => {
+    PENDING_THUMBS.forEach(j => {
+      if (j.cv.isConnected && j.cv.offsetParent !== null) paintThumb(j.cv, j.project, j.color, j.opts);
+    });
+  });
+}
+
+// Status pills inherit their orbit's colour; the word carries the meaning.
+// Only private/archived are dimmed, so they read as "not public".
+const STATUS_COLOR = {
+  private: 'rgba(240,240,240,0.45)',
+  archived: 'rgba(240,240,240,0.3)',
+};
+
+// ══════════════════════════════════════════════
+//  SHARED DETAIL RENDERER
+// ══════════════════════════════════════════════
+function renderDetail(target, orbit, p, { hero = true } = {}) {
+  const col = orbit.color;
+  target.innerHTML = '';
+
+  if (hero) {
+    const heroEl = document.createElement('div');
+    heroEl.className = 'detail-hero';
+    heroEl.title = 'Click to enlarge';
+    mountVisual(heroEl, p, col, { w: 900, h: 190 });
+    heroEl.onclick = () => openZoom(p, col, 0);
+    target.appendChild(heroEl);
+  }
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'detail-eyebrow';
+  eyebrow.style.color = col;
+  eyebrow.textContent = `Orbit 0${orbit.id ?? (ORBITS.indexOf(orbit) + 1)} · ${orbit.name}`;
+  target.appendChild(eyebrow);
+
+  const h1 = document.createElement('div');
+  h1.className = 'detail-title'; h1.textContent = p.title;
+  target.appendChild(h1);
+
+  if (p.tagline) {
+    const tl = document.createElement('div');
+    tl.className = 'detail-tagline'; tl.textContent = p.tagline;
+    target.appendChild(tl);
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'detail-meta';
+  const st = document.createElement('span');
+  st.className = 'chip';
+  const sc = STATUS_COLOR[p.status] || col;
+  st.style.borderColor = sc + '55'; st.style.color = sc;
+  st.textContent = p.status;
+  meta.appendChild(st);
+  if (p.type) {
+    const ty = document.createElement('span');
+    ty.className = 'chip';
+    ty.style.borderColor = 'rgba(255,255,255,0.14)'; ty.style.color = 'rgba(240,240,240,0.5)';
+    ty.textContent = p.type;
+    meta.appendChild(ty);
+  }
+  (p.tags || []).forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'chip';
+    el.style.borderColor = col + '2e'; el.style.color = col + 'aa';
+    el.textContent = t;
+    meta.appendChild(el);
+  });
+  target.appendChild(meta);
+
+  if (p.stat) {
+    const s2 = document.createElement('div');
+    s2.className = 'detail-stat';
+    s2.innerHTML = `<span class="v" style="color:${col}">${p.stat}</span><span class="l">${p.statLabel || ''}</span>`;
+    target.appendChild(s2);
+  }
+
+  (p.sections || []).forEach(sec => {
+    const d = document.createElement('div');
+    d.className = 'detail-sect';
+    const hh = document.createElement('h4');
+    hh.style.color = col + 'bb'; hh.textContent = sec.heading;
+    d.appendChild(hh);
+    if (sec.body) {
+      const pp = document.createElement('p'); pp.textContent = sec.body; d.appendChild(pp);
+    }
+    if (sec.checklist) {
+      const ul = document.createElement('ul');
+      sec.checklist.forEach(item => {
+        const li = document.createElement('li');
+        li.className = item.done ? 'done' : '';
+        li.textContent = item.text;
+        li.style.setProperty('--c', col);
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    }
+    target.appendChild(d);
+  });
+
+  // Screenshot gallery
+  const shots = collectShots(p);
+  if (shots.length > 1) {
+    const gal = document.createElement('div');
+    gal.className = 'gallery';
+    const lab = document.createElement('div');
+    lab.className = 'gallery-label'; lab.style.color = col + 'bb';
+    lab.textContent = `In use · ${shots.length} shots`;
+    gal.appendChild(lab);
+
+    const grid = document.createElement('div');
+    grid.className = 'gallery-grid';
+    shots.forEach((sh, i) => {
+      const b = document.createElement('button');
+      b.className = 'gshot';
+      b.onmouseenter = () => b.style.borderColor = col + '55';
+      b.onmouseleave = () => b.style.borderColor = 'rgba(255,255,255,0.08)';
+      const im = document.createElement('img');
+      im.src = sh.src; im.alt = sh.caption || p.title; im.loading = 'lazy';
+      b.appendChild(im);
+      if (sh.caption) {
+        const cp = document.createElement('span');
+        cp.className = 'gshot-cap'; cp.textContent = sh.caption;
+        b.appendChild(cp);
+      }
+      b.onclick = e => { e.stopPropagation(); openZoom(p, col, i); };
+      grid.appendChild(b);
+    });
+    gal.appendChild(grid);
+    target.appendChild(gal);
+  }
+
+  if (p.url) {
+    const a = document.createElement('a');
+    a.className = 'detail-visit'; a.href = p.url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.style.borderColor = col + '4d'; a.style.color = col;
+    a.textContent = 'Visit site ↗';
+    target.appendChild(a);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  LIST VIEW — full-width bars, expand downward
+// ══════════════════════════════════════════════
+const listScroll = document.getElementById('listScroll');
+let listOpen = null;
+
+function buildList() {
+  listScroll.innerHTML = '';
+  const inner = document.createElement('div');
+  inner.className = 'list-inner';
+
+  ORBITS.forEach((orbit, oi) => {
+    const head = document.createElement('div');
+    head.className = 'list-group-head';
+    head.dataset.orbitAnchor = oi;
+    head.style.color = orbit.color + 'cc';
+    head.innerHTML = `<span>0${oi+1} · ${orbit.name}</span>` +
+      `<span class="bar" style="background:linear-gradient(to right, ${orbit.color}33, transparent)"></span>`;
+    inner.appendChild(head);
+
+    orbit.bodies.forEach((p, bi) => {
+      const sc = STATUS_COLOR[p.status] || orbit.color;
+
+      const row = document.createElement('div');
+      row.className = 'lrow';
+      row._oi = oi; row._bi = bi;
+
+      const rh = document.createElement('button');
+      rh.className = 'lrow-head';
+      rh.innerHTML = `
+        <span class="lrow-dot" style="background:${orbit.color};box-shadow:0 0 9px ${orbit.color}99"></span>
+        <span class="lrow-title">${p.title}</span>
+        <span class="lrow-type">${p.type || ''}</span>
+        <span class="lrow-tagline">${p.tagline || ''}</span>
+        <span class="lrow-status" style="border-color:${sc}44;color:${sc}">${p.status}</span>
+        <span class="lrow-chev">▶</span>`;
+      rh.onclick = () => toggleList(oi, bi);
+
+      const body = document.createElement('div');
+      body.className = 'lrow-body';
+      const bi_ = document.createElement('div');
+      bi_.className = 'lrow-inner';
+      const vis = document.createElement('div');
+      vis.className = 'lrow-visual';
+      const content = document.createElement('div');
+      content.className = 'lrow-content';
+      bi_.appendChild(vis); bi_.appendChild(content);
+      body.appendChild(bi_);
+
+      row.appendChild(rh); row.appendChild(body);
+      row._vis = vis; row._content = content; row._built = false;
+      inner.appendChild(row);
+    });
+  });
+
+  listScroll.appendChild(inner);
+}
+
+function toggleList(oi, bi, forceOpen = false) {
+  const rows = [...listScroll.querySelectorAll('.lrow')];
+  const row = rows.find(r => r._oi === oi && r._bi === bi);
+  if (!row) return;
+  const orbit = ORBITS[oi], p = orbit.bodies[bi];
+  const isOpen = row.classList.contains('open');
+
+  if (isOpen && !forceOpen) {
+    row.classList.remove('open');
+    row.style.borderColor = 'rgba(255,255,255,0.06)';
+    row.querySelector('.lrow-head').style.borderLeftColor = 'transparent';
+    listOpen = null;
+    return;
+  }
+
+  // accordion — only one open at a time
+  rows.forEach(r => {
+    r.classList.remove('open');
+    r.style.borderColor = 'rgba(255,255,255,0.06)';
+    r.querySelector('.lrow-head').style.borderLeftColor = 'transparent';
+  });
+
+  if (!row._built) {
+    mountVisual(row._vis, p, orbit.color, { w: 340, h: 196 });
+    row._vis.onclick = e => { e.stopPropagation(); openZoom(p, orbit.color); };
+    renderDetail(row._content, orbit, p, { hero: false });
+    row._built = true;
+  }
+
+  row.classList.add('open');
+  row.style.borderColor = orbit.color + '44';
+  row.querySelector('.lrow-head').style.borderLeftColor = orbit.color;
+  listOpen = { oi, bi };
+  repaintThumbs();
+  setTimeout(() => cacheAnchors(listScroll), 480);   // after the expand transition
+}
+
+// ══════════════════════════════════════════════
+//  CARD VIEW
+// ══════════════════════════════════════════════
+const cardsScroll = document.getElementById('cardsScroll');
+
+function buildCards() {
+  cardsScroll.innerHTML = '';
+  ORBITS.forEach((orbit, oi) => {
+    const head = document.createElement('div');
+    head.className = 'cards-group-head';
+    head.dataset.orbitAnchor = oi;
+    head.style.color = orbit.color + 'cc';
+    head.innerHTML = `<span>0${oi+1} · ${orbit.name}</span><span class="bar" style="background:linear-gradient(to right, ${orbit.color}33, transparent)"></span>`;
+    cardsScroll.appendChild(head);
+
+    const grid = document.createElement('div');
+    grid.className = 'cards-grid';
+    orbit.bodies.forEach((p, bi) => {
+      const card = document.createElement('button');
+      card.className = 'pcard';
+      card.style.borderLeft = `2px solid ${orbit.color}55`;
+      card.onmouseenter = () => {
+        card.style.borderColor = orbit.color + '55';
+        card.style.boxShadow = `0 12px 32px -14px ${orbit.color}66`;
+      };
+      card.onmouseleave = () => {
+        card.style.borderColor = 'rgba(255,255,255,0.07)';
+        card.style.borderLeftColor = orbit.color + '55';
+        card.style.boxShadow = 'none';
+      };
+
+      const thumb = document.createElement('div');
+      thumb.className = 'pcard-thumb';
+      mountVisual(thumb, p, orbit.color, { w: 300, h: 132 });
+      const sc = STATUS_COLOR[p.status] || orbit.color;
+      const badge = document.createElement('span');
+      badge.className = 'pcard-status';
+      badge.style.color = sc;
+      badge.textContent = p.status;
+      thumb.appendChild(badge);
+      card.appendChild(thumb);
+
+      const body = document.createElement('div');
+      body.className = 'pcard-body';
+      body.innerHTML = `
+        <div class="pcard-type" style="color:${orbit.color}99">${p.type || ''}</div>
+        <div class="pcard-title">${p.title}</div>
+        <div class="pcard-tagline">${p.tagline || ''}</div>
+        <div class="pcard-tags">${(p.tags||[]).slice(0,3).map(t =>
+          `<span class="pcard-tag" style="border-color:${orbit.color}2e;color:${orbit.color}aa">${t}</span>`
+        ).join('')}</div>`;
+      card.appendChild(body);
+
+      card.onclick = () => openLightbox(oi, bi);
+      grid.appendChild(card);
+    });
+    cardsScroll.appendChild(grid);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  LIGHTBOX
+// ══════════════════════════════════════════════
+const lightbox = document.createElement('div');
+lightbox.className = 'lightbox';
+lightbox.innerHTML = '<div class="lightbox-inner"></div>';
+const lbClose = document.createElement('button');
+lbClose.className = 'lightbox-close'; lbClose.textContent = '✕';
+lightbox.appendChild(lbClose);
+document.body.appendChild(lightbox);
+const lbInner = lightbox.querySelector('.lightbox-inner');
+
+function openLightbox(oi, bi) {
+  lightbox.classList.remove('zoomed');
+  renderDetail(lbInner, ORBITS[oi], ORBITS[oi].bodies[bi]);
+  lightbox.classList.add('show');
+}
+// Hero + gallery as one ordered list of screenshots.
+function collectShots(p) {
+  const out = [];
+  if (p.image) out.push({ src: p.image, caption: p.imageCaption || null });
+  (p.gallery || []).forEach(g => {
+    if (typeof g === 'string') out.push({ src: g, caption: null });
+    else if (g && g.src) out.push({ src: g.src, caption: g.caption || null });
+  });
+  return out;
+}
+
+let zoomShots = [], zoomIdx = 0, zoomColor = '#FFD700', zoomProject = null;
+
+function openZoom(p, color, startIdx = 0) {
+  zoomProject = p; zoomColor = color;
+  zoomShots = collectShots(p);
+  zoomIdx = startIdx;
+  lightbox.classList.add('zoomed');
+  paintZoom();
+  lightbox.classList.add('show');
+}
+
+function paintZoom() {
+  lbInner.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'zoom-wrap';
+
+  if (!zoomShots.length) {
+    // no real screenshots — show the generated art at full size
+    const holder = document.createElement('div');
+    mountVisual(holder, zoomProject, zoomColor, { w: 1100, h: 480 });
+    const cv = holder.querySelector('canvas');
+    if (cv) { cv.style.height = '480px'; requestAnimationFrame(() => paintThumb(cv, zoomProject, zoomColor, { w: 1100, h: 480 })); }
+    wrap.appendChild(holder);
+    lbInner.appendChild(wrap);
+    return;
+  }
+
+  const sh = zoomShots[zoomIdx];
+  const img = document.createElement('img');
+  img.className = 'zoom-img'; img.src = sh.src; img.alt = sh.caption || zoomProject.title;
+  wrap.appendChild(img);
+
+  if (zoomShots.length > 1) {
+    const prev = document.createElement('button');
+    prev.className = 'zoom-nav zoom-prev'; prev.textContent = '‹';
+    prev.onclick = e => { e.stopPropagation(); stepZoom(-1); };
+    const next = document.createElement('button');
+    next.className = 'zoom-nav zoom-next'; next.textContent = '›';
+    next.onclick = e => { e.stopPropagation(); stepZoom(1); };
+    wrap.appendChild(prev); wrap.appendChild(next);
+  }
+
+  lbInner.appendChild(wrap);
+
+  if (sh.caption) {
+    const cap = document.createElement('div');
+    cap.className = 'zoom-cap'; cap.style.color = zoomColor + 'cc';
+    cap.textContent = sh.caption;
+    lbInner.appendChild(cap);
+  }
+  if (zoomShots.length > 1) {
+    const cnt = document.createElement('div');
+    cnt.className = 'zoom-count';
+    cnt.textContent = `${zoomIdx + 1} / ${zoomShots.length}`;
+    lbInner.appendChild(cnt);
+  }
+}
+
+function stepZoom(d) {
+  if (!zoomShots.length) return;
+  zoomIdx = (zoomIdx + d + zoomShots.length) % zoomShots.length;
+  paintZoom();
+}
+function closeLightbox() { lightbox.classList.remove('show'); }
+lbClose.onclick = closeLightbox;
+lightbox.onclick = e => { if (e.target === lightbox) closeLightbox(); };
+
+// ══════════════════════════════════════════════
+//  MODE SWITCHING
+// ══════════════════════════════════════════════
+const views = {
+  orbit: document.getElementById('mapWrap'),
+  list:  document.getElementById('viewList'),
+  cards: document.getElementById('viewCards'),
+};
+let viewMode = 'orbit';
+
+function setMode(mode) {
+  viewMode = mode;
+  Object.entries(views).forEach(([k, el]) => el.classList.toggle('active', k === mode));
+  document.querySelectorAll('.mode-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode));
+
+  // the speed tuner is orbit-only; the 5-element menu persists everywhere
+  document.getElementById('tunerToggle').style.display = mode === 'orbit' ? '' : 'none';
+  backBtn.style.display = mode === 'orbit' ? '' : 'none';
+  tuner.style.display = mode === 'orbit' ? '' : 'none';
+
+  paintSidebar();
+  if (mode === 'list')  requestAnimationFrame(() => cacheAnchors(listScroll));
+  if (mode === 'cards') requestAnimationFrame(() => cacheAnchors(cardsScroll));
+  if (mode === 'orbit') resize();
+  if (mode !== 'orbit') repaintThumbs();
+}
+
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.onclick = () => setMode(b.dataset.mode);
+});
+
+buildList();
+buildCards();
+
+listScroll.addEventListener('scroll', () => spyScroll(listScroll), { passive: true });
+cardsScroll.addEventListener('scroll', () => spyScroll(cardsScroll), { passive: true });
+
+setMode('orbit');
+
+resize();
+goSystem();
+draw();
+</script>
+</body>
+</html>

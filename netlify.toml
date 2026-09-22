@@ -1,0 +1,8 @@
+# Static site: no build step yet. Netlify serves /public as-is.
+[build]
+  publish = "public"
+
+[[headers]]
+  for = "/project-media/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

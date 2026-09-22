@@ -1,0 +1,12 @@
+# The Obsidian vault never goes in this repo.
+# The build script strips "## Private notes" from the published JSON,
+# but raw notes committed here would keep those sections in git history.
+vault/
+*.vault/
+.obsidian/
+
+node_modules/
+.DS_Store
+Thumbs.db
+.env
+.env.*

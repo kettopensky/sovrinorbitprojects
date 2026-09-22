@@ -1,0 +1,564 @@
+{
+  "_comment": "GENERATED FILE — do not edit by hand. Run `npm run build:projects` to regenerate from the Obsidian vault.",
+  "generated": "2026-09-21T23:24:32.746Z",
+  "orbits": [
+    {
+      "id": 1,
+      "name": "Passion Projects",
+      "short": "Passion",
+      "blurb": "Closest to the core. Built because I wanted them to exist.",
+      "color": "#FFD700",
+      "radius": 0.3,
+      "projects": [
+        {
+          "slug": "sovrin-console",
+          "title": "Sovrin Console",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "active",
+          "size": 10,
+          "featured": true,
+          "tagline": "Every agent, every machine, one interface.",
+          "tags": [
+            "PySide6/Qt",
+            "JSON-RPC",
+            "Flagship"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": "85 days",
+          "statLabel": "Longest continuous agent-scheduler uptime",
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "A desktop app that unifies every AI agent running across every machine into a single interface. Replaces the earlier Textual-TUI version (Sovrin Terminal) while keeping the same backend."
+            },
+            {
+              "heading": "How it is built",
+              "body": "PySide6/Qt front end over a Hermes gateway bridge speaking JSON-RPC. SQLite with FTS5 for full-text search. UDP multicast for LAN discovery, plus a WireGuard relay for reaching machines across networks."
+            },
+            {
+              "heading": "Current state",
+              "checklist": [
+                {
+                  "done": true,
+                  "text": "Messaging"
+                },
+                {
+                  "done": true,
+                  "text": "Full-text search"
+                },
+                {
+                  "done": true,
+                  "text": "LAN + WAN discovery"
+                },
+                {
+                  "done": false,
+                  "text": "Conference rooms"
+                },
+                {
+                  "done": false,
+                  "text": "File workspace panel"
+                },
+                {
+                  "done": false,
+                  "text": "Voice input"
+                },
+                {
+                  "done": false,
+                  "text": "Portable packaging"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "personal-calendar",
+          "title": "Personal Calendar App",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "in-progress",
+          "size": 7,
+          "featured": false,
+          "tagline": "Scheduling that answers to me and nobody else.",
+          "tags": [
+            "In Progress"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "A personal scheduling and calendar tool. Still early, shape is being worked out."
+            },
+            {
+              "heading": "Current state",
+              "checklist": [
+                {
+                  "done": false,
+                  "text": "Define core data model"
+                },
+                {
+                  "done": false,
+                  "text": "First working prototype"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Digital Products",
+      "short": "Products",
+      "blurb": "Tools and infrastructure. Built, running, proven.",
+      "color": "#00F5FF",
+      "radius": 0.46,
+      "projects": [
+        {
+          "slug": "gol",
+          "title": "Gol",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "shipped",
+          "size": 8,
+          "featured": false,
+          "tagline": "Arrives on a flash drive. Leaves no trace.",
+          "tags": [
+            "Security",
+            "Portable",
+            "No-install"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "A portable, no-install field diagnostic and security scanner. Runs straight from a flash drive, performs a full OS scan and produces a report, and leaves nothing behind on the target machine."
+            },
+            {
+              "heading": "Why it exists",
+              "body": "On-site diagnostics usually mean installing software on someone else's computer. This does not."
+            }
+          ]
+        },
+        {
+          "slug": "golam",
+          "title": "Golam",
+          "image": null,
+          "imageCaption": "initializing scan",
+          "gallery": [],
+          "type": null,
+          "status": "shipped",
+          "size": 8,
+          "featured": false,
+          "tagline": "The WARD suite. Gol, with teeth.",
+          "tags": [
+            "Antivirus",
+            "Desktop",
+            "ClamAV"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "Wraps Gol's scanner with ClamAV for real malware detection, packaged as a tray-icon desktop application."
+            },
+            {
+              "heading": "How it is built",
+              "body": "pywebview for the interface, pystray for the tray presence, bundled ClamAV binaries for detection."
+            }
+          ]
+        },
+        {
+          "slug": "self-hosted-storage",
+          "title": "Self-Hosted Storage",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "private",
+          "size": 7,
+          "featured": false,
+          "tagline": "The cloud, if the cloud were mine.",
+          "tags": [
+            "Nextcloud",
+            "Docker"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "A Nextcloud instance running on my own hardware, reachable over WireGuard. No third-party cloud storage anywhere in the loop."
+            },
+            {
+              "heading": "How it is built",
+              "body": "Docker Compose stack: Nextcloud, MariaDB, and Caddy as the reverse proxy."
+            }
+          ]
+        },
+        {
+          "slug": "vpn-relay",
+          "title": "VPN Relay",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "private",
+          "size": 6,
+          "featured": false,
+          "tagline": "A door only I know the shape of.",
+          "tags": [
+            "WireGuard",
+            "Networking"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "A small cloud droplet acting as a WireGuard rendezvous point, so my laptop can reach home machines from anywhere without exposing them directly to the internet."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "My Own Sites",
+      "short": "My Sites",
+      "blurb": "Brands and properties I run myself.",
+      "color": "#FF8A3D",
+      "radius": 0.62,
+      "projects": [
+        {
+          "slug": "ctrl-alt-help",
+          "title": "Ctrl Alt Help",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 8,
+          "featured": false,
+          "tagline": "The world keeps moving. Nobody should get left behind by it.",
+          "tags": [
+            "Tech Support",
+            "Accessibility"
+          ],
+          "url": "https://controlalthelp.ca",
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "Tech support built to help elderly people stay relevant in a digital world that keeps moving without them."
+            }
+          ]
+        },
+        {
+          "slug": "kaul-kett-marketing",
+          "title": "Kaul & Kett Marketing",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 8,
+          "featured": false,
+          "tagline": "A human ear. AI hands.",
+          "tags": [
+            "Marketing",
+            "Branding"
+          ],
+          "url": "https://kettmarketing.ca",
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "An AI-human marketing and brand-growth agency for business owners who need a human ear but AI hands."
+            }
+          ]
+        },
+        {
+          "slug": "sovrin-first-build",
+          "title": "SOVRIN First Build",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 7,
+          "featured": false,
+          "tagline": "Where the look of this map started.",
+          "tags": [
+            "React",
+            "Three.js",
+            "Netlify"
+          ],
+          "url": "https://sovrinprojects.netlify.app",
+          "repo": "https://github.com/kettopensky/sovrinprojects-site",
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "The first version of the SOVRIN site: a cinematic landing page with a particle-swarm solar system, a neural-pathway services map and a transmission-terminal contact form. Originally built on a hosted page builder, then exported and moved to self-hosting."
+            },
+            {
+              "heading": "How it is built",
+              "body": "Vite, React, Tailwind, Three.js with bloom post-processing, and Framer Motion. Deployed on Netlify from git."
+            }
+          ]
+        },
+        {
+          "slug": "this-site",
+          "title": "This Site",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 7,
+          "featured": false,
+          "tagline": "You are standing inside the example.",
+          "tags": [
+            "Meta",
+            "Self-hosted"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "The map you are looking at right now. Built from scratch, self-hosted, no page builder and no platform lock-in."
+            },
+            {
+              "heading": "How it is built",
+              "body": "React and Vite, canvas-rendered orbit map, deployed from a git push. Migrated off a hosted builder deliberately."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Client Work",
+      "short": "Clients",
+      "blurb": "Built and handed to the people who own them.",
+      "color": "#A78BFA",
+      "radius": 0.78,
+      "projects": [
+        {
+          "slug": "antique-overstock",
+          "title": "Antique Overstock",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 7,
+          "featured": false,
+          "tagline": "Curated vintage, properly shelved.",
+          "tags": [
+            "E-commerce"
+          ],
+          "url": "https://antiqueoverstock.com",
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "Curated vintage and antiques storefront."
+            }
+          ]
+        },
+        {
+          "slug": "dusterbusters",
+          "title": "Dusterbusters",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 7,
+          "featured": false,
+          "tagline": "GTA commercial cleaning.",
+          "tags": [
+            "Local Business"
+          ],
+          "url": "https://calldustbusters.netlify.app",
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "Site for a Greater Toronto Area commercial cleaning company."
+            }
+          ]
+        },
+        {
+          "slug": "jewelry-revival",
+          "title": "The Jewelry Revival",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "live",
+          "size": 7,
+          "featured": false,
+          "tagline": "Estate jewelry, given a storefront.",
+          "tags": [
+            "E-commerce"
+          ],
+          "url": "https://thejewelryrevival.com",
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What it is",
+              "body": "Estate-jewelry storefront."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Services Offered",
+      "short": "Services",
+      "blurb": "The outer ring. What you can hire me to build.",
+      "color": "#A3E635",
+      "radius": 0.94,
+      "projects": [
+        {
+          "slug": "svc-automation",
+          "title": "Automation",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "available",
+          "size": 7,
+          "featured": false,
+          "tagline": "Infrastructure that does not need babysitting.",
+          "tags": [
+            "Service"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What you get",
+              "body": "Workflow systems that eliminate friction and let your operations run without constant manual intervention."
+            }
+          ]
+        },
+        {
+          "slug": "svc-local-systems",
+          "title": "Local Digital Systems",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "available",
+          "size": 7,
+          "featured": false,
+          "tagline": "Your data. Your rules. Your building.",
+          "tags": [
+            "Service"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What you get",
+              "body": "Custom-built digital infrastructure for sovereign operations, hosted where you decide."
+            }
+          ]
+        },
+        {
+          "slug": "svc-privacy-tools",
+          "title": "Privacy-First Tools",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "available",
+          "size": 7,
+          "featured": false,
+          "tagline": "Surveillance made architecturally impossible.",
+          "tags": [
+            "Service"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What you get",
+              "body": "Encrypted solutions built around data sovereignty from the first layer of the stack."
+            }
+          ]
+        },
+        {
+          "slug": "svc-websites",
+          "title": "Websites",
+          "image": null,
+          "imageCaption": null,
+          "gallery": [],
+          "type": null,
+          "status": "available",
+          "size": 7,
+          "featured": false,
+          "tagline": "Not a template. Not a rental.",
+          "tags": [
+            "Service"
+          ],
+          "url": null,
+          "repo": null,
+          "stat": null,
+          "statLabel": null,
+          "sections": [
+            {
+              "heading": "What you get",
+              "body": "Bespoke digital experiences, from editorial portfolios to high-conversion platforms. Built to be owned, not leased."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
